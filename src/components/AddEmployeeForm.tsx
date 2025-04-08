@@ -34,6 +34,8 @@ const AddEmployeeForm = () => {
   });
 
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [search, setSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState<'All' | 'Not Started' | 'In Progress' | 'Completed'>('All');
 
   // Load from localStorage
   useEffect(() => {
@@ -53,7 +55,6 @@ const AddEmployeeForm = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
     const { fullName, email, role, startDate } = employeeInput;
     if (!fullName || !email || !role || !startDate) return;
 
@@ -83,11 +84,44 @@ const AddEmployeeForm = () => {
     );
   };
 
+  const handleEditEmployee = (empId: number, updatedInfo: Partial<Employee>) => {
+    setEmployees((prev) =>
+      prev.map((emp) =>
+        emp.id === empId ? { ...emp, ...updatedInfo } : emp
+      )
+    );
+  };
+
+  const handleAddCustomTask = (empId: number, taskTitle: string) => {
+    setEmployees((prev) =>
+      prev.map((emp) => {
+        if (emp.id === empId) {
+          return {
+            ...emp,
+            checklist: [...emp.checklist, { title: taskTitle, completed: false }],
+          };
+        }
+        return emp;
+      })
+    );
+  };
+
   const getProgress = (checklist: Task[]) => {
     const completed = checklist.filter((t) => t.completed).length;
     const total = checklist.length;
     const percent = Math.round((completed / total) * 100);
     return { completed, total, percent };
+  };
+
+  const filterEmployees = () => {
+    return employees.filter((emp) => {
+      const { completed, total } = getProgress(emp.checklist);
+      const progress = completed === total ? 'Completed' : completed > 0 ? 'In Progress' : 'Not Started';
+      const matchesSearch = emp.fullName.toLowerCase().includes(search.toLowerCase());
+      const matchesFilter = filterStatus === 'All' || progress === filterStatus;
+
+      return matchesSearch && matchesFilter;
+    }).sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
   };
 
   return (
@@ -134,60 +168,82 @@ const AddEmployeeForm = () => {
         </button>
       </form>
 
-      {employees.length > 0 && (
-        <div className="mt-8 space-y-6">
-          <h3 className="text-lg font-medium">Employee List:</h3>
-          {employees.map((emp) => {
-            const { completed, total, percent } = getProgress(emp.checklist);
-            const fullyOnboarded = completed === total;
+      <div className="mt-8 space-y-4">
+        <input
+          type="text"
+          placeholder="Search by Name"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full border rounded p-2"
+        />
 
-            return (
-              <div
-                key={emp.id}
-                className="border p-4 rounded shadow-sm bg-gray-50"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <p><strong>{emp.fullName}</strong> — {emp.role}</p>
-                    <p className="text-sm text-gray-500">{emp.email}</p>
-                    <p className="text-sm text-gray-500">Start: {emp.startDate}</p>
-                  </div>
-                  {fullyOnboarded && (
-                    <span className="bg-green-200 text-green-700 text-sm font-semibold px-2 py-1 rounded">
-                      Fully Onboarded
-                    </span>
-                  )}
+        <select
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value as 'All' | 'Not Started' | 'In Progress' | 'Completed')}
+          className="w-full border rounded p-2"
+        >
+          <option value="All">All Status</option>
+          <option value="Not Started">Not Started</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Completed">Completed</option>
+        </select>
+
+        <h3 className="text-lg font-medium">Employee List:</h3>
+        {filterEmployees().map((emp) => {
+          const { completed, total, percent } = getProgress(emp.checklist);
+          const progress = completed === total ? 'Completed' : completed > 0 ? 'In Progress' : 'Not Started';
+
+          return (
+            <div
+              key={emp.id}
+              className="border p-4 rounded shadow-sm bg-gray-50"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <p><strong>{emp.fullName}</strong> — {emp.role}</p>
+                  <p className="text-sm text-gray-500">{emp.email}</p>
+                  <p className="text-sm text-gray-500">Start: {emp.startDate}</p>
                 </div>
-
-                <div className="mb-2">
-                  <div className="w-full bg-gray-200 h-2 rounded">
-                    <div
-                      className="bg-green-500 h-2 rounded"
-                      style={{ width: `${percent}%` }}
-                    />
-                  </div>
-                  <p className="text-xs mt-1 text-gray-600">{percent}% Complete</p>
-                </div>
-
-                <ul className="space-y-2 mt-2">
-                  {emp.checklist.map((task, i) => (
-                    <li key={i} className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={task.completed}
-                        onChange={() => toggleTask(emp.id, i)}
-                      />
-                      <span className={task.completed ? 'line-through text-green-600' : ''}>
-                        {task.title}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+                <span className={`text-sm font-semibold ${progress === 'Completed' ? 'text-green-600' : progress === 'In Progress' ? 'text-yellow-600' : 'text-red-600'}`}>
+                  {progress}
+                </span>
               </div>
-            );
-          })}
-        </div>
-      )}
+
+              <div className="mb-2">
+                <div className="w-full bg-gray-200 h-2 rounded">
+                  <div
+                    className="bg-green-500 h-2 rounded"
+                    style={{ width: `${percent}%` }}
+                  />
+                </div>
+                <p className="text-xs mt-1 text-gray-600">{percent}% Complete</p>
+              </div>
+
+              <ul className="space-y-2 mt-2">
+                {emp.checklist.map((task, i) => (
+                  <li key={i} className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={task.completed}
+                      onChange={() => toggleTask(emp.id, i)}
+                    />
+                    <span className={task.completed ? 'line-through text-green-600' : ''}>
+                      {task.title}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+
+              <button
+                onClick={() => handleAddCustomTask(emp.id, prompt('Enter custom task:') || '')}
+                className="mt-4 text-blue-600"
+              >
+                Add Custom Task
+              </button>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };

@@ -1,4 +1,3 @@
-// pages/index.tsx
 import AddEmployeeForm from '@/components/AddEmployeeForm';
 
 export default function Home() {
