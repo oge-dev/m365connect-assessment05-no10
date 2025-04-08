@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 type Task = {
   title: string;
@@ -17,35 +17,37 @@ type Employee = {
 };
 
 const defaultChecklist: Task[] = [
-  { title: 'Sign NDA', completed: false },
-  { title: 'Submit ID card', completed: false },
-  { title: 'Set up email', completed: false },
-  { title: 'Complete HR orientation', completed: false },
-  { title: 'Access company tools (Slack, GitHub)', completed: false },
-  { title: 'Book intro meeting with manager', completed: false },
+  { title: "Sign NDA", completed: false },
+  { title: "Submit ID card", completed: false },
+  { title: "Set up email", completed: false },
+  { title: "Complete HR orientation", completed: false },
+  { title: "Access company tools (Slack, GitHub)", completed: false },
+  { title: "Book intro meeting with manager", completed: false },
 ];
 
 const AddEmployeeForm = () => {
   const [employeeInput, setEmployeeInput] = useState({
-    fullName: '',
-    email: '',
-    role: '',
-    startDate: '',
+    fullName: "",
+    email: "",
+    role: "",
+    startDate: "",
   });
 
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const [search, setSearch] = useState('');
-  const [filterStatus, setFilterStatus] = useState<'All' | 'Not Started' | 'In Progress' | 'Completed'>('All');
+  const [search, setSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState<
+    "All" | "Not Started" | "In Progress" | "Completed"
+  >("All");
 
   // Load from localStorage
   useEffect(() => {
-    const stored = localStorage.getItem('employees');
+    const stored = localStorage.getItem("employees");
     if (stored) setEmployees(JSON.parse(stored));
   }, []);
 
   // Save to localStorage
   useEffect(() => {
-    localStorage.setItem('employees', JSON.stringify(employees));
+    localStorage.setItem("employees", JSON.stringify(employees));
   }, [employees]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -68,7 +70,7 @@ const AddEmployeeForm = () => {
     };
 
     setEmployees((prev) => [...prev, newEmployee]);
-    setEmployeeInput({ fullName: '', email: '', role: '', startDate: '' });
+    setEmployeeInput({ fullName: "", email: "", role: "", startDate: "" });
   };
 
   const toggleTask = (empId: number, taskIndex: number) => {
@@ -76,19 +78,12 @@ const AddEmployeeForm = () => {
       prev.map((emp) => {
         if (emp.id === empId) {
           const updatedChecklist = [...emp.checklist];
-          updatedChecklist[taskIndex].completed = !updatedChecklist[taskIndex].completed;
+          updatedChecklist[taskIndex].completed =
+            !updatedChecklist[taskIndex].completed;
           return { ...emp, checklist: updatedChecklist };
         }
         return emp;
       })
-    );
-  };
-
-  const handleEditEmployee = (empId: number, updatedInfo: Partial<Employee>) => {
-    setEmployees((prev) =>
-      prev.map((emp) =>
-        emp.id === empId ? { ...emp, ...updatedInfo } : emp
-      )
     );
   };
 
@@ -98,7 +93,10 @@ const AddEmployeeForm = () => {
         if (emp.id === empId) {
           return {
             ...emp,
-            checklist: [...emp.checklist, { title: taskTitle, completed: false }],
+            checklist: [
+              ...emp.checklist,
+              { title: taskTitle, completed: false },
+            ],
           };
         }
         return emp;
@@ -114,14 +112,27 @@ const AddEmployeeForm = () => {
   };
 
   const filterEmployees = () => {
-    return employees.filter((emp) => {
-      const { completed, total } = getProgress(emp.checklist);
-      const progress = completed === total ? 'Completed' : completed > 0 ? 'In Progress' : 'Not Started';
-      const matchesSearch = emp.fullName.toLowerCase().includes(search.toLowerCase());
-      const matchesFilter = filterStatus === 'All' || progress === filterStatus;
+    return employees
+      .filter((emp) => {
+        const { completed, total } = getProgress(emp.checklist);
+        const progress =
+          completed === total
+            ? "Completed"
+            : completed > 0
+            ? "In Progress"
+            : "Not Started";
+        const matchesSearch = emp.fullName
+          .toLowerCase()
+          .includes(search.toLowerCase());
+        const matchesFilter =
+          filterStatus === "All" || progress === filterStatus;
 
-      return matchesSearch && matchesFilter;
-    }).sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+        return matchesSearch && matchesFilter;
+      })
+      .sort(
+        (a, b) =>
+          new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+      );
   };
 
   return (
@@ -179,7 +190,15 @@ const AddEmployeeForm = () => {
 
         <select
           value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value as 'All' | 'Not Started' | 'In Progress' | 'Completed')}
+          onChange={(e) =>
+            setFilterStatus(
+              e.target.value as
+                | "All"
+                | "Not Started"
+                | "In Progress"
+                | "Completed"
+            )
+          }
           className="w-full border rounded p-2"
         >
           <option value="All">All Status</option>
@@ -191,7 +210,12 @@ const AddEmployeeForm = () => {
         <h3 className="text-lg font-medium">Employee List:</h3>
         {filterEmployees().map((emp) => {
           const { completed, total, percent } = getProgress(emp.checklist);
-          const progress = completed === total ? 'Completed' : completed > 0 ? 'In Progress' : 'Not Started';
+          const progress =
+            completed === total
+              ? "Completed"
+              : completed > 0
+              ? "In Progress"
+              : "Not Started";
 
           return (
             <div
@@ -200,11 +224,23 @@ const AddEmployeeForm = () => {
             >
               <div className="flex items-center justify-between mb-2">
                 <div>
-                  <p><strong>{emp.fullName}</strong> — {emp.role}</p>
+                  <p>
+                    <strong>{emp.fullName}</strong> — {emp.role}
+                  </p>
                   <p className="text-sm text-gray-500">{emp.email}</p>
-                  <p className="text-sm text-gray-500">Start: {emp.startDate}</p>
+                  <p className="text-sm text-gray-500">
+                    Start: {emp.startDate}
+                  </p>
                 </div>
-                <span className={`text-sm font-semibold ${progress === 'Completed' ? 'text-green-600' : progress === 'In Progress' ? 'text-yellow-600' : 'text-red-600'}`}>
+                <span
+                  className={`text-sm font-semibold ${
+                    progress === "Completed"
+                      ? "text-green-600"
+                      : progress === "In Progress"
+                      ? "text-yellow-600"
+                      : "text-red-600"
+                  }`}
+                >
                   {progress}
                 </span>
               </div>
@@ -216,7 +252,9 @@ const AddEmployeeForm = () => {
                     style={{ width: `${percent}%` }}
                   />
                 </div>
-                <p className="text-xs mt-1 text-gray-600">{percent}% Complete</p>
+                <p className="text-xs mt-1 text-gray-600">
+                  {percent}% Complete
+                </p>
               </div>
 
               <ul className="space-y-2 mt-2">
@@ -227,7 +265,11 @@ const AddEmployeeForm = () => {
                       checked={task.completed}
                       onChange={() => toggleTask(emp.id, i)}
                     />
-                    <span className={task.completed ? 'line-through text-green-600' : ''}>
+                    <span
+                      className={
+                        task.completed ? "line-through text-green-600" : ""
+                      }
+                    >
                       {task.title}
                     </span>
                   </li>
@@ -235,7 +277,12 @@ const AddEmployeeForm = () => {
               </ul>
 
               <button
-                onClick={() => handleAddCustomTask(emp.id, prompt('Enter custom task:') || '')}
+                onClick={() =>
+                  handleAddCustomTask(
+                    emp.id,
+                    prompt("Enter custom task:") || ""
+                  )
+                }
                 className="mt-4 text-blue-600"
               >
                 Add Custom Task
